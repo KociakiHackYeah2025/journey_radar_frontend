@@ -30,17 +30,13 @@ class SecondScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.train,
-                        size: 80,
-                        color: Colors.white,
-                      ),
+                      Icon(Icons.train, size: 80, color: Colors.white),
                       SizedBox(height: 20),
                       Text(
                         'To jest drugi ekran',
@@ -53,10 +49,7 @@ class SecondScreen extends StatelessWidget {
                       SizedBox(height: 10),
                       Text(
                         'Używa tego samego tła!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ],
                   ),

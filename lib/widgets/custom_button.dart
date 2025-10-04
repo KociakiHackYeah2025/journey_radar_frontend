@@ -31,10 +31,7 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: _getButtonStyle(),
-        child: Text(
-          text,
-          style: _getTextStyle(),
-        ),
+        child: Text(text, style: _getTextStyle()),
       ),
     );
   }

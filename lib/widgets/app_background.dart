@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 
 class AppBackground extends StatelessWidget {
   final Widget child;
-  
-  const AppBackground({
-    super.key,
-    required this.child,
-  });
+
+  const AppBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          color: const Color(0xFFFDC300),
-        ),
+        Container(color: const Color(0xFFFDC300)),
 
         Align(
           alignment: Alignment.bottomCenter,

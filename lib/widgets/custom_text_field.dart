@@ -24,16 +24,10 @@ class CustomTextField extends StatelessWidget {
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Colors.black87, fontSize: 16),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(
-            color: Colors.grey,
-            fontSize: 16,
-          ),
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
