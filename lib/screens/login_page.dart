@@ -32,6 +32,31 @@ class _LoginPageState extends State<LoginPage> {
         child: SafeArea(
           child: Column(
             children: [
+              // AppBar z przyciskiem powrotu
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Logowanie',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 44), // Placeholder dla symmetrii
+                  ],
+                ),
+              ),
+              
               // Główna zawartość z możliwością przewijania
               Expanded(
                 child: SingleChildScrollView(

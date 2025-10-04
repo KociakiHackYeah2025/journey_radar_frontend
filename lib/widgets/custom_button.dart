@@ -4,6 +4,7 @@ enum CustomButtonVariant {
   primary,
   textOnly,
   textYellow,
+  glassWhite,
   // Tutaj dodamy kolejne warianty w przyszłości
 }
 
@@ -67,6 +68,17 @@ class CustomButton extends StatelessWidget {
           elevation: 0,
           shadowColor: Colors.transparent,
         );
+      case CustomButtonVariant.glassWhite:
+        return ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.2),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Colors.white, width: 1.5),
+          ),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+        );
     }
   }
 
@@ -89,6 +101,12 @@ class CustomButton extends StatelessWidget {
           color: Color(0xFFFDC300),
           fontSize: 16,
           fontWeight: FontWeight.w600,
+        );
+      case CustomButtonVariant.glassWhite:
+        return const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
         );
     }
   }
