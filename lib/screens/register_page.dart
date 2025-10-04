@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/app_background.dart';
 import '../widgets/glass_card.dart';
+import '../services/api_service.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -33,26 +34,55 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      // Symulacja rejestracji
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Konto zostało utworzone pomyślnie!'),
-            backgroundColor: Colors.green,
-          ),
+      try {
+        final result = await ApiService.register(
+          _emailController.text.trim(),
+          _passwordController.text,
         );
 
-        // Przekierowanie do strony logowania
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+        if (result != null) {
+          if (result['error'] != null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(result['message'] ?? 'Błąd rejestracji'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          } else {
+            // Sukces - pokaż komunikat i przekieruj do logowania
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Konto zostało utworzone pomyślnie!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+
+              // Przekierowanie do strony logowania
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Wystąpił nieoczekiwany błąd'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
