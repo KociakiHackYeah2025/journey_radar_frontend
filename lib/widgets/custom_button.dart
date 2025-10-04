@@ -9,10 +9,11 @@ enum CustomButtonVariant {
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final CustomButtonVariant variant;
   final EdgeInsetsGeometry? margin;
   final double? width;
+  final bool isLoading;
 
   const CustomButton({
     super.key,
@@ -21,6 +22,7 @@ class CustomButton extends StatelessWidget {
     this.variant = CustomButtonVariant.primary,
     this.margin,
     this.width,
+    this.isLoading = false,
   });
 
   @override
@@ -29,9 +31,18 @@ class CustomButton extends StatelessWidget {
       width: width,
       margin: margin,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: _getButtonStyle(),
-        child: Text(text, style: _getTextStyle()),
+        child: isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(text, style: _getTextStyle()),
       ),
     );
   }
