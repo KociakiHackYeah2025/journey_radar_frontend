@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+
+
+
 
 import 'widgets/app_background.dart';
 import 'widgets/glass_card.dart';
@@ -14,6 +15,7 @@ import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/profile_page.dart';
+import 'screens/search_results_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,10 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isApiConnected = false;
   String apiConnectionMessage = 'Sprawdzanie połączenia...';
 
-  // Zmienne dla wyników wyszukiwania
-  List<Map<String, dynamic>> searchResults = [];
+  // Zmienna dla stanu wyszukiwania
   bool isSearching = false;
-  bool hasSearched = false;
 
   @override
   void initState() {
@@ -175,10 +175,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (mounted) {
         setState(() {
-          hasSearched = true;
           isSearching = false;
-          searchResults = _generateMockResults();
         });
+
+        // Nawiguj do ekranu wyników
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchResultsPage(
+              searchResults: _generateMockResults(),
+              fromLocation: _fromController.text,
+              toLocation: _toController.text,
+            ),
+          ),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -256,17 +266,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // ZAWSZE pokaż wyniki - nawet przy błędzie API
       if (mounted) {
+        List<Map<String, dynamic>> results;
+        if (hasResults) {
+          // Jeśli mamy prawdziwe wyniki API
+          results = _extractSearchResults(result);
+        } else {
+          // Używamy mockowych danych dla demo/błędu
+          results = _generateMockResults();
+        }
+
         setState(() {
-          hasSearched = true;
           isSearching = false;
-          if (hasResults) {
-            // Jeśli mamy prawdziwe wyniki API
-            searchResults = _extractSearchResults(result);
-          } else {
-            // Używamy mockowych danych dla demo/błędu
-            searchResults = _generateMockResults();
-          }
         });
+
+        // Nawiguj do ekranu wyników
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchResultsPage(
+              searchResults: results,
+              fromLocation: _fromController.text,
+              toLocation: _toController.text,
+            ),
+          ),
+        );
 
         // Pokaż odpowiedni komunikat
         String message;
@@ -278,13 +301,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Znaleziono $resultCount połączeń z ${_fromController.text} do ${_toController.text}';
             backgroundColor = Colors.green;
             break;
-          case 'error':
-            message = 'Błąd API - wyświetlam przykładowe połączenia';
-            backgroundColor = Colors.orange;
-            break;
+          // case 'error':
+          //   message = 'Błąd API - wyświetlam przykładowe połączenia';
+          //   backgroundColor = Colors.orange;
+          //   break;
           default:
-            message = 'Wyświetlam przykładowe połączenia (demo)';
-            backgroundColor = Colors.blue;
+              message = 'Dane zostały pobrane';
+              backgroundColor = Colors.blue;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -294,12 +317,21 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // NAWET przy wyjątku - pokaż mockowe wyniki
         setState(() {
-          hasSearched = true;
           isSearching = false;
-          searchResults = _generateMockResults();
         });
+
+        // Nawiguj do ekranu wyników z mockowymi danymi
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchResultsPage(
+              searchResults: _generateMockResults(),
+              fromLocation: _fromController.text,
+              toLocation: _toController.text,
+            ),
+          ),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -413,113 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  Widget _buildConnectionMap(Map<String, dynamic> connection) {
-    final routePoints =
-        connection['routePoints'] as List<Map<String, dynamic>>? ?? [];
 
-    if (routePoints.isEmpty) {
-      return Container(
-        color: Colors.grey[400],
-        child: const Center(
-          child: Text(
-            'Mapa niedostępna',
-            style: TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ),
-      );
-    }
-
-    // Przygotuj punkty dla mapy
-    final List<LatLng> mapPoints = routePoints
-        .map((point) => LatLng(point['lat'] as double, point['lng'] as double))
-        .toList();
-
-    // Wyznacz centrum mapy
-    double centerLat =
-        mapPoints.map((p) => p.latitude).reduce((a, b) => a + b) /
-        mapPoints.length;
-    double centerLng =
-        mapPoints.map((p) => p.longitude).reduce((a, b) => a + b) /
-        mapPoints.length;
-
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: LatLng(centerLat, centerLng),
-        initialZoom: 8.5,
-        interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-        ),
-      ),
-      children: [
-        // Warstwa kafelków
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.journey_radar',
-        ),
-
-        // Linia trasy - kolor zależny od typu pociągu
-        if (mapPoints.length > 1)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: mapPoints,
-                strokeWidth: 3.0,
-                color: _getTrainColor(connection['trainType'] ?? 'IC'),
-              ),
-            ],
-          ),
-
-        // Markery stacji - mniejsze dla mini-mapy
-        MarkerLayer(
-          markers: routePoints.asMap().entries.map((entry) {
-            final index = entry.key;
-            final point = entry.value;
-            final isFirst = index == 0;
-            final isLast = index == routePoints.length - 1;
-
-            return Marker(
-              point: LatLng(point['lat'] as double, point['lng'] as double),
-              width: 24,
-              height: 24,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isFirst
-                      ? Colors.green
-                      : (isLast ? Colors.red : Colors.blue),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
-                child: Center(
-                  child: Icon(
-                    isFirst
-                        ? Icons.play_arrow
-                        : (isLast ? Icons.stop : Icons.circle),
-                    color: Colors.white,
-                    size: 12,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Color _getTrainColor(String trainType) {
-    switch (trainType.toUpperCase()) {
-      case 'IC':
-        return const Color(0xFFFDC300); // Żółty dla InterCity
-      case 'RE':
-        return Colors.blue; // Niebieski dla Regional Express
-      case 'IR':
-        return Colors.green; // Zielony dla InterRegio
-      case 'TLK':
-        return Colors.purple; // Fioletowy dla TLK
-      default:
-        return const Color(0xFFFDC300); // Domyślny żółty
-    }
-  }
 
   @override
   void dispose() {
@@ -634,7 +560,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           const SizedBox(height: 40),
 
-                          // 🚂 Sekcja wyników wyszukiwania
+                          // Wskaźnik ładowania podczas wyszukiwania
                           if (isSearching)
                             const Center(
                               child: Column(
@@ -650,299 +576,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ],
                               ),
-                            ),
-
-                          if (hasSearched &&
-                              !isSearching &&
-                              searchResults.isNotEmpty)
-                            Column(
-                              children: [
-                                for (final result in searchResults)
-                                  Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    width: double.infinity,
-                                    child: GlassCard(
-                                      width: double.infinity,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // 🟡 GÓRA – od/do (bez labeli) + okrągły „swap” na środku
-                                            Stack(
-                                              alignment: Alignment.center,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    // lewa połowa – start
-                                                    Expanded(
-                                                      child: Container(
-                                                        decoration: const BoxDecoration(
-                                                          color: Colors.white,
-                                                          borderRadius:
-                                                              BorderRadius.only(
-                                                                topLeft:
-                                                                    Radius.circular(
-                                                                      16,
-                                                                    ),
-                                                              ),
-                                                        ),
-                                                        padding:
-                                                            const EdgeInsets.all(
-                                                              16,
-                                                            ),
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              result['from'],
-                                                              maxLines: 2,
-                                                              style: const TextStyle(
-                                                                color: Color(
-                                                                  0xFF232323,
-                                                                ),
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 4,
-                                                            ),
-                                                            Text(
-                                                              result['departureTime'],
-                                                              style:
-                                                                  const TextStyle(
-                                                                    color: Colors
-                                                                        .black54,
-                                                                    fontSize:
-                                                                        14,
-                                                                  ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    // prawa połowa – cel
-                                                    Expanded(
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.white
-                                                              .withValues(alpha: 0.5),
-                                                          borderRadius:
-                                                              const BorderRadius.only(
-                                                                topRight:
-                                                                    Radius.circular(
-                                                                      16,
-                                                                    ),
-                                                              ),
-                                                        ),
-                                                        padding:
-                                                            const EdgeInsets.fromLTRB(
-                                                              32,
-                                                              16,
-                                                              16,
-                                                              16,
-                                                            ),
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              result['to'],
-                                                              maxLines: 2,
-                                                              style: const TextStyle(
-                                                                color: Color(
-                                                                  0xFF232323,
-                                                                ),
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 4,
-                                                            ),
-                                                            Text(
-                                                              result['arrivalTime'],
-                                                              style:
-                                                                  const TextStyle(
-                                                                    color: Colors
-                                                                        .black54,
-                                                                    fontSize:
-                                                                        14,
-                                                                  ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-
-                                                // środkowy okrąg (dekor)
-                                                Container(
-                                                  width: 38,
-                                                  height: 38,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color: const Color(
-                                                        0xFFFDC300,
-                                                      ),
-                                                      width: 2,
-                                                    ),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.black
-                                                            .withValues(alpha: 0.1),
-                                                        blurRadius: 4,
-                                                        offset: const Offset(
-                                                          0,
-                                                          2,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.arrow_forward_rounded,
-                                                    size: 20,
-                                                    color: Color(0xFFFDC300),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-
-                                            // 📊 szczegóły — kontynuacja headera
-                                            Container(
-                                              width: double.infinity,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 16,
-                                                  ),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-                                                border: Border(
-                                                  top: BorderSide(
-                                                    color: Color(0xFFFDC300),
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.train,
-                                                        color: Color(
-                                                          0xFF232323,
-                                                        ),
-                                                        size: 18,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Text(
-                                                        result['trainType'] ??
-                                                            'Pociąg',
-                                                        style: const TextStyle(
-                                                          color: Color(
-                                                            0xFF232323,
-                                                          ),
-                                                          fontSize: 13,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  if (result['changes'] == 0)
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 10,
-                                                            vertical: 5,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.green
-                                                            .withValues(alpha: 0.1),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              12,
-                                                            ),
-                                                      ),
-                                                      child: const Text(
-                                                        'Bezpośredni',
-                                                        style: TextStyle(
-                                                          color: Colors.green,
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  Text(
-                                                    'Peron ${result['platform']}',
-                                                    style: const TextStyle(
-                                                      color: Color(0xFF232323),
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-
-                                            // 🗺️ mini-mapa – przylepiona pod szczegółami
-                                            Container(
-                                              width: double.infinity,
-                                              height: 180,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-                                                border: Border(
-                                                  top: BorderSide(
-                                                    color: Color(0xFFFDC300),
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                borderRadius: BorderRadius.only(
-                                                  bottomLeft: Radius.circular(
-                                                    16,
-                                                  ),
-                                                  bottomRight: Radius.circular(
-                                                    16,
-                                                  ),
-                                                ),
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    const BorderRadius.only(
-                                                      bottomLeft:
-                                                          Radius.circular(16),
-                                                      bottomRight:
-                                                          Radius.circular(16),
-                                                    ),
-                                                child: _buildConnectionMap(
-                                                  result,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
                             ),
                         ],
                       ),
@@ -1181,33 +814,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ),
-
-          /// 🔲 Przycisk otwierania sidebaru
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            top: 20,
-            right: isSidebarOpen ? 270 : 20,
-            child: SafeArea(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.grid_view_rounded,
-                    size: 28,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isSidebarOpen = !isSidebarOpen;
-                    });
-                  },
                 ),
               ),
             ),
