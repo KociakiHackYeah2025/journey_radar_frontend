@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
+import 'autocomplete_text_field.dart';
 
-class JourneySearchWidget extends StatelessWidget {
-  final TextEditingController? fromController;
-  final TextEditingController? toController;
+class JourneySearchWidget extends StatefulWidget {
   final VoidCallback? onSwap;
 
   const JourneySearchWidget({
     super.key,
-    this.fromController,
-    this.toController,
-    this.onSwap,
+    this.onSwap, required TextEditingController fromController, required TextEditingController toController,
   });
+
+  @override
+  State<JourneySearchWidget> createState() => _JourneySearchWidgetState();
+}
+
+class _JourneySearchWidgetState extends State<JourneySearchWidget> {
+  late final TextEditingController fromController;
+  late final TextEditingController toController;
+
+  @override
+  void initState() {
+    super.initState();
+    fromController = TextEditingController();
+    toController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    fromController.dispose();
+    toController.dispose();
+    super.dispose();
+  }
+
+  void _swapLocations() {
+    final temp = fromController.text;
+    fromController.text = toController.text;
+    toController.text = temp;
+    widget.onSwap?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +84,7 @@ class JourneySearchWidget extends StatelessWidget {
                         Expanded(
                           child: Container(
                             margin: const EdgeInsets.only(top: 6),
-                            child: TextField(
+                            child: AutocompleteTextField(
                               controller: fromController,
                               decoration: InputDecoration(
                                 hintStyle: TextStyle(
@@ -69,7 +95,7 @@ class JourneySearchWidget extends StatelessWidget {
                                 contentPadding: const EdgeInsets.only(right: 24),
                                 isDense: true,
                               ),
-                              style: const TextStyle(
+                              textStyle: const TextStyle(
                                 color: Color(0xFF232323),
                                 fontSize: 12,
                               ),
@@ -118,7 +144,7 @@ class JourneySearchWidget extends StatelessWidget {
                         Expanded(
                           child: Container(
                             margin: const EdgeInsets.only(top: 6),
-                            child: TextField(
+                            child: AutocompleteTextField(
                               controller: toController,
                               decoration: InputDecoration(
                                 hintStyle: TextStyle(
@@ -129,7 +155,7 @@ class JourneySearchWidget extends StatelessWidget {
                                 contentPadding: const EdgeInsets.only(left: 12),
                                 isDense: true,
                               ),
-                              style: const TextStyle(
+                              textStyle: const TextStyle(
                                 color: Color(0xFF232323),
                                 fontSize: 12,
                               ),
@@ -151,7 +177,7 @@ class JourneySearchWidget extends StatelessWidget {
           right: 0,
           child: Center(
             child: GestureDetector(
-              onTap: onSwap,
+              onTap: _swapLocations,
               child: Container(
                 width: 32,
                 height: 32,

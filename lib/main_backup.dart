@@ -54,11 +54,39 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isSidebarOpen = false;
   bool isLoggedIn = false;
   bool isCheckingLoginStatus = true;
+  
+  // Kontrolery dla pól wyszukiwania
+  final TextEditingController _fromController = TextEditingController();
+  final TextEditingController _toController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _initializeAutocomplete();
+  }
+  
+  @override
+  void dispose() {
+    _fromController.dispose();
+    _toController.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _initializeAutocomplete() async {
+    // Załaduj początkowe dane autocomplete przy starcie aplikacji
+    try {
+      await ApiService.searchAutocomplete('');
+      debugPrint('Autocomplete initialized at app start');
+    } catch (e) {
+      debugPrint('Error initializing autocomplete at start: $e');
+    }
+  }
+  
+  void _swapStations() {
+    final temp = _fromController.text;
+    _fromController.text = _toController.text;
+    _toController.text = temp;
   }
 
   Future<void> _checkLoginStatus() async {
@@ -104,17 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
-  }
-
-  // Add controllers for the search widget
-  final TextEditingController _fromController = TextEditingController();
-  final TextEditingController _toController = TextEditingController();
-
-  @override
-  void dispose() {
-    _fromController.dispose();
-    _toController.dispose();
-    super.dispose();
   }
 
   @override
@@ -183,7 +200,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const SizedBox(height: 16),
 
                                   // Blok wyszukiwania
-                                  JourneySearchWidget(fromController: _fromController, toController: _toController),
+                                  JourneySearchWidget(
+                                    fromController: _fromController,
+                                    toController: _toController,
+                                    onSwap: _swapStations,
+                                  ),
 
                                   const SizedBox(height: 16),
 

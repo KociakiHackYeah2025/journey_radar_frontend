@@ -201,6 +201,46 @@ class ApiService {
     }
   }
 
+  // Funkcja do wyszukiwania autouzupełniania stacji
+  static Future<List<String>> searchAutocomplete(String query) async {
+    if (query.isEmpty || query.length < 2) {
+      return [];
+    }
+    
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/search_autocomplete?query=${Uri.encodeComponent(query)}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      debugPrint('Search autocomplete response status: ${response.statusCode}');
+      debugPrint('Search autocomplete response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data is List) {
+          return data.cast<String>();
+        } else if (data is Map && data['results'] != null) {
+          return (data['results'] as List).cast<String>();
+        } else if (data is Map && data['data'] != null) {
+          return (data['data'] as List).cast<String>();
+        }
+        
+        return [];
+      } else {
+        debugPrint('Search autocomplete error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Search autocomplete exception: $e');
+      return [];
+    }
+  }
+
   // Funkcja testowa do sprawdzenia połączenia z API
   static Future<Map<String, dynamic>?> testConnection() async {
     try {
