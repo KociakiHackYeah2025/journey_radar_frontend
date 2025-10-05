@@ -15,6 +15,7 @@ import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/profile_page.dart';
+import 'screens/train_search_screen.dart';
 import 'screens/search_results_page.dart';
 
 void main() async {
@@ -782,11 +783,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 setState(() {
                                   isSidebarOpen = false;
                                 });
-                                // TODO: Navigacja do zgłaszania utrudnień
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Funkcja zgłaszania utrudnień w przygotowaniu'),
-                                    backgroundColor: Colors.orange,
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TrainSearchScreen(),
                                   ),
                                 );
                               },
