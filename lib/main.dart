@@ -1,20 +1,22 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'widgets/app_background.dart';
 import 'widgets/glass_card.dart';
 import 'widgets/custom_button.dart';
 import 'widgets/journey_search_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'screens/login_page.dart';
-import 'screens/home_page.dart';
 import 'screens/register_page.dart';
+import 'screens/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicjalizuj SharedPreferences na początku
+  // Inicjalizacja SharedPreferences
   try {
     await SharedPreferences.getInstance();
   } catch (e) {
@@ -36,6 +38,7 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
+      home: const HomeScreen(),
     );
   }
 }
@@ -49,6 +52,59 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isSidebarOpen = false;
+  bool isLoggedIn = false;
+  bool isCheckingLoginStatus = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    try {
+      final loggedIn = await ApiService.isLoggedIn();
+      if (mounted) {
+        setState(() {
+          isLoggedIn = loggedIn;
+          isCheckingLoginStatus = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoggedIn = false;
+          isCheckingLoginStatus = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await ApiService.logout();
+      if (mounted) {
+        setState(() {
+          isLoggedIn = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Zostałeś wylogowany'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Błąd podczas wylogowywania'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 1),
 
                           // Logo
-                          Container(
+                          SizedBox(
                             height: 150,
                             child: SvgPicture.asset(
                               'assets/images/icons/logo.svg',
@@ -85,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           // GlassCard z wyszukiwaniem
                           GlassCard(
                             width: double.infinity,
-                            child: Container(
+                            child: SizedBox(
                               height: 210,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -138,115 +194,186 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  // 🔐 Przyciski na dole
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        CustomButton(
-                          text: 'Zaloguj się',
-                          variant: CustomButtonVariant.primary,
-                          width: double.infinity,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 15),
-                        CustomButton(
-                          text: 'Zarejestruj się',
-                          variant: CustomButtonVariant.glassWhite,
-                          width: double.infinity,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                      ],
+                  // 🔐 Przyciski na dole - warunkowe wyświetlanie
+                  if (isCheckingLoginStatus)
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    )
+                  else if (!isLoggedIn)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          CustomButton(
+                            text: 'Zaloguj się',
+                            variant: CustomButtonVariant.primary,
+                            width: double.infinity,
+                            onPressed: () async {
+                              final result = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                              );
+                              // Jeśli logowanie się powiodło, odśwież stan
+                              if (result == true) {
+                                _checkLoginStatus();
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          CustomButton(
+                            text: 'Zarejestruj się',
+                            variant: CustomButtonVariant.glassWhite,
+                            width: double.infinity,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterPage(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 24,
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Jesteś zalogowany',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          CustomButton(
+                            text: 'Wyloguj się',
+                            variant: CustomButtonVariant.glassWhite,
+                            width: double.infinity,
+                            onPressed: _logout,
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
           ),
 
-          /// 📂 Sidebar wysuwany z prawej strony
+          /// 📂 Sidebar z BLUR
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             right: isSidebarOpen ? 0 : -250,
             top: 0,
             bottom: 0,
-            child: Container(
-              width: 250,
-              color: const Color(0xFFFDC300).withOpacity(0.8),
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text(
-                        'Menu',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                child: Container(
+                  width: 250,
+                  color: const Color(0xFFFDC300).withOpacity(0.25), // półprzezroczysty kolor
+                  child: SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Menu',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                        ListTile(
+                          leading: const Icon(Icons.home, color: Colors.white),
+                          title: const Text(
+                            'Strona główna',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const HomePage(),
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.settings, color: Colors.white),
+                          title: const Text(
+                            'Ustawienia',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {},
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.info, color: Colors.white),
+                          title: const Text(
+                            'O aplikacji',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {},
+                        ),
+                        const Spacer(),
+                        if (isLoggedIn)
+                          ListTile(
+                            leading: const Icon(Icons.logout, color: Colors.white),
+                            title: const Text(
+                              'Wyloguj',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                isSidebarOpen = false;
+                              });
+                              _logout();
+                            },
+                          ),
+                      ],
                     ),
-                    ListTile(
-                      leading: const Icon(Icons.home, color: Colors.white),
-                      title: const Text(
-                        'Strona główna',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.settings, color: Colors.white),
-                      title: const Text(
-                        'Ustawienia',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.info, color: Colors.white),
-                      title: const Text(
-                        'O aplikacji',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {},
-                    ),
-                    const Spacer(),
-                    ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.white),
-                      title: const Text(
-                        'Wyloguj',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {},
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          /// 🔲 PRZYCISK TOGGLE — równy odstęp, przesuwa się z sidebarem
+          /// 🔲 Przycisk otwierania sidebaru
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            top: 20, // 📏 równy odstęp od góry
-            right: isSidebarOpen ? 250 + 20 : 20, // 📏 20px od prawej
+            top: 20,
+            right: isSidebarOpen ? 270 : 20,
             child: SafeArea(
               child: Container(
                 decoration: BoxDecoration(
@@ -269,98 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class AuthChecker extends StatefulWidget {
-  const AuthChecker({super.key});
-
-  @override
-  State<AuthChecker> createState() => _AuthCheckerState();
-}
-
-class _AuthCheckerState extends State<AuthChecker> {
-  @override
-  void initState() {
-    super.initState();
-    _checkAuthStatus();
-  }
-
-  Future<void> _checkAuthStatus() async {
-    try {
-      final isLoggedIn = await ApiService.isLoggedIn();
-      
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => isLoggedIn ? const HomePage() : const HomeScreen(),
-          ),
-        );
-      }
-    } catch (e) {
-      // W przypadku błędu, przekieruj do HomeScreen
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo lub ikona aplikacji
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFDC300),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.explore,
-                size: 40,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'Journey Radar',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4565AD),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Twoja podróż zaczyna się tutaj',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 40),
-            const SizedBox(
-              width: 30,
-              height: 30,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: Color(0xFFFDC300),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

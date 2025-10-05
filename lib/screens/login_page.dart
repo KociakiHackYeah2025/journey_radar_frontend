@@ -6,7 +6,6 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../services/api_service.dart';
 import 'register_page.dart';
-import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -59,12 +58,9 @@ class _LoginPageState extends State<LoginPage> {
             );
           }
         } else {
-          // Sukces - przekieruj do home page
+          // Sukces - wróć do ekranu głównego z informacją o udanym logowaniu
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
+            Navigator.pop(context, true); // Przekaż true jako wynik logowania
           }
         }
       }
@@ -94,39 +90,26 @@ class _LoginPageState extends State<LoginPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // AppBar z przyciskiem powrotu
+              // 🔙 Górna belka tylko z przyciskiem cofania
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Logowanie',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(width: 44), // Placeholder dla symmetrii
-                  ],
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                  ),
                 ),
               ),
-              
-              // Główna zawartość z możliwością przewijania
+
+              // 📜 Główna zawartość z możliwością przewijania
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
-                    bottom: MediaQuery.of(context).viewInsets.bottom > 0 
-                        ? MediaQuery.of(context).viewInsets.bottom + 20 
+                    bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                        ? MediaQuery.of(context).viewInsets.bottom + 20
                         : 0,
                   ),
                   child: Column(
@@ -134,22 +117,20 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       const SizedBox(height: 1),
 
-                      // Logo na górze
-                      Container(
+                      // 📍 Logo na górze
+                      SizedBox(
                         height: 110,
                         child: SvgPicture.asset(
                           'assets/logo.svg',
                           fit: BoxFit.contain,
-                          placeholderBuilder: (BuildContext context) => Container(
-                            child: const Center(
-                              child: Text(
-                                'MAŁOPOLSKIE',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 2.0,
-                                ),
+                          placeholderBuilder: (BuildContext context) => const Center(
+                            child: Text(
+                              'MAŁOPOLSKIE',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2.0,
                               ),
                             ),
                           ),
@@ -158,25 +139,16 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 1),
 
-                      // Glass Card z formularzem logowania
+                      // 🪟 Glass Card z formularzem logowania
                       GlassCard(
                         width: double.infinity,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text(
-                              'Zaloguj się',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-
+                            // 🟡 Usunięto napis „Zaloguj się” – jeśli chcesz, możesz zostawić
                             const SizedBox(height: 30),
 
-                            // Input Email
+                            // ✉️ Input Email
                             CustomTextField(
                               controller: _emailController,
                               hintText: 'Wprowadź swój email',
@@ -185,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
 
                             const SizedBox(height: 20),
 
-                            // Input Hasło
+                            // 🔐 Input Hasło
                             CustomTextField(
                               controller: _passwordController,
                               hintText: 'Wprowadź swoje hasło',
@@ -194,28 +166,22 @@ class _LoginPageState extends State<LoginPage> {
 
                             const SizedBox(height: 8),
 
-                            // Link "Odzyskaj hasło" - mały, po prawej
+                            // 🔗 Link "Odzyskaj hasło"
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                        'Przesłano link do odzyskania hasła',
-                                      ),
+                                      content: Text('Przesłano link do odzyskania hasła'),
                                       backgroundColor: Color(0xFFFDC300),
                                     ),
                                   );
                                 },
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: const Text(
                                   'Odzyskaj hasło',
@@ -232,12 +198,12 @@ class _LoginPageState extends State<LoginPage> {
 
                             const SizedBox(height: 20),
 
-                            // Przycisk Zaloguj się
+                            // 🟡 Przycisk Zaloguj się
                             CustomButton(
                               text: 'Zaloguj się',
                               variant: CustomButtonVariant.primary,
                               isLoading: _isLoading,
-                              onPressed: () => _handleLogin(),
+                              onPressed: _handleLogin,
                             ),
                           ],
                         ),
@@ -249,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              // Sekcja rejestracji przyczepiona do dołu
+              // 👤 Sekcja rejestracji na dole
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -265,9 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterPage(),
-                          ),
+                          MaterialPageRoute(builder: (context) => const RegisterPage()),
                         );
                       },
                     ),
