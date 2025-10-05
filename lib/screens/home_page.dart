@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_button.dart';
 import 'login_page.dart';
+import 'leaflet_map_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -30,32 +32,66 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle,
-              size: 80,
-              color: Colors.green,
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Witamy w Journey Radar!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.explore,
+                size: 80,
+                color: Color(0xFFFDC300),
               ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Zostałeś pomyślnie zalogowany.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+              const SizedBox(height: 20),
+              const Text(
+                'Witamy w Journey Radar!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4565AD),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              const Text(
+                'Odkrywaj nowe miejsca i twórz swoją mapę wspomnień',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 40),
+              
+              // Przycisk do mapy
+              CustomButton(
+                text: 'Otwórz mapę',
+                variant: CustomButtonVariant.primary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LeafletMapScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              
+              // Przycisk z statystykami (placeholder)
+              CustomButton(
+                text: 'Moje punkty',
+                variant: CustomButtonVariant.textOnly,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Funkcja w przygotowaniu'),
+                      backgroundColor: Color(0xFFFDC300),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

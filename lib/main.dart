@@ -12,6 +12,7 @@ import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/home_page.dart';
+import 'screens/leaflet_map_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -322,10 +323,31 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(color: Colors.white),
                           ),
                           onTap: () {
+                            setState(() {
+                              isSidebarOpen = false;
+                            });
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const HomePage(),
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.map, color: Colors.white),
+                          title: const Text(
+                            'Mapa',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              isSidebarOpen = false;
+                            });
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LeafletMapScreen(),
                               ),
                             );
                           },
