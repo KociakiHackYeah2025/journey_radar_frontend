@@ -12,6 +12,7 @@ import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/home_page.dart';
+import 'screens/train_search_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -286,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Row(
@@ -337,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
                 child: Container(
                   width: 250,
-                  color: const Color(0xFFFDC300).withOpacity(0.25), // półprzezroczysty kolor
+                  color: const Color(0xFFFDC300).withValues(alpha: 0.25), // półprzezroczysty kolor
                   child: SafeArea(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,6 +365,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const HomePage(),
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.report_problem, color: Colors.white),
+                          title: const Text(
+                            'Zgłoś utrudnienie',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              isSidebarOpen = false;
+                            });
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TrainSearchScreen(),
                               ),
                             );
                           },
@@ -415,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SafeArea(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(

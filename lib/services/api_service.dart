@@ -414,4 +414,96 @@ class ApiService {
       };
     }
   }
+
+  static Future<Map<String, dynamic>> verifyTicket({
+    required String tripId,
+    required int userId,
+    required String fromStopId,
+    required String toStopId,
+  }) async {
+    try {
+      debugPrint('Verifying ticket for trip: $tripId');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/ticket/verify'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'trip_id': tripId,
+          'user_id': userId,
+          'from_stop_id': fromStopId,
+          'to_stop_id': toStopId,
+        }),
+      );
+
+      debugPrint('Ticket verification response status: ${response.statusCode}');
+      debugPrint('Ticket verification response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': 'Bilet został zweryfikowany pomyślnie',
+          'data': responseData,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Błąd podczas weryfikacji biletu: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('Ticket verification error: $e');
+      return {
+        'success': false,
+        'message': 'Błąd połączenia podczas weryfikacji: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> reportIssue({
+    required int userId,
+    required String stopId,
+    required String tripId,
+    required String createdAt,
+  }) async {
+    try {
+      debugPrint('Reporting issue for trip: $tripId');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/issues/report'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+          'stop_id': stopId,
+          'trip_id': tripId,
+          'created_at': createdAt,
+        }),
+      );
+
+      debugPrint('Issue report response status: ${response.statusCode}');
+      debugPrint('Issue report response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': 'Zgłoszenie utrudnienia zostało wysłane',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Błąd podczas wysyłania zgłoszenia: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('Issue report error: $e');
+      return {
+        'success': false,
+        'message': 'Błąd połączenia: $e',
+      };
+    }
+  }
 }
