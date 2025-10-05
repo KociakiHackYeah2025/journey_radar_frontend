@@ -241,22 +241,104 @@ class ApiService {
     }
   }
 
+  // Funkcja do wyszukiwania połączeń kolejowych
+  static Future<Map<String, dynamic>?> searchJourneys({
+    required String from,
+    required String to,
+    required String datetime,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/search').replace(queryParameters: {
+        'from': from,
+        'to': to,
+        'datetime': datetime,
+      });
+
+      debugPrint('Searching journeys: $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      debugPrint('Journey search response status: ${response.statusCode}');
+      debugPrint('Journey search response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Sprawdź czy odpowiedź zawiera jakiekolwiek wyniki
+        bool hasResults = false;
+        if (data != null) {
+          if (data['results'] is List && (data['results'] as List).isNotEmpty) {
+            hasResults = true;
+          } else if (data['data'] is List && (data['data'] as List).isNotEmpty) {
+            hasResults = true;
+          } else if (data['journeys'] is List && (data['journeys'] as List).isNotEmpty) {
+            hasResults = true;
+          } else if (data is List && data.isNotEmpty) {
+            hasResults = true;
+          }
+        }
+        
+        // Dodaj informację o tym czy znaleziono wyniki
+        if (data is Map<String, dynamic>) {
+          data['hasResults'] = hasResults;
+        }
+        
+        return data;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'error': 'Błąd wyszukiwania',
+            'message': errorData['message'] ?? 'Nie udało się znaleźć połączeń'
+          };
+        } catch (e) {
+          return {
+            'error': 'Błąd wyszukiwania',
+            'message': 'Kod błędu: ${response.statusCode}'
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('Journey search exception: $e');
+      return {
+        'error': 'Błąd połączenia',
+        'message': 'Sprawdź połączenie z internetem: $e'
+      };
+    }
+  }
+
   // Funkcja testowa do sprawdzenia połączenia z API
   static Future<Map<String, dynamic>?> testConnection() async {
     try {
+      // Testuj endpoint search z przykładowymi danymi
       final response = await http.get(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('$baseUrl/search?from=test&to=test&datetime=2025-01-01T12:00'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       );
       
-      return {
-        'status': response.statusCode,
-        'connected': true,
-        'message': 'API dostępne'
-      };
+      // Sprawdź czy odpowiedź ma sens (status 200 lub błąd walidacji, ale nie błąd sieci)
+      if (response.statusCode == 200 || response.statusCode == 400 || response.statusCode == 422) {
+        return {
+          'status': response.statusCode,
+          'connected': true,
+          'message': 'API dostępne'
+        };
+      } else {
+        return {
+          'status': response.statusCode,
+          'connected': false,
+          'message': 'API niedostępne (${response.statusCode})'
+        };
+      }
     } catch (e) {
       return {
         'status': 0,

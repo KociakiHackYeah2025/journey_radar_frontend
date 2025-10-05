@@ -58,6 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Kontrolery dla pól wyszukiwania
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
 
   @override
   void initState() {
@@ -70,6 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _fromController.dispose();
     _toController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
     super.dispose();
   }
   
@@ -170,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           GlassCard(
                             width: double.infinity,
                             child: SizedBox(
-                              height: 210,
+                              height: 300,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -203,6 +207,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   JourneySearchWidget(
                                     fromController: _fromController,
                                     toController: _toController,
+                                    dateController: _dateController,
+                                    timeController: _timeController,
                                     onSwap: _swapStations,
                                   ),
 
