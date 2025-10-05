@@ -30,7 +30,7 @@ class AppBackground extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Color(0xFFFDC300),
-                        Color(0xFFFDC300).withOpacity(0.7),
+                        const Color(0xFFFDC300).withValues(alpha: 0.8),
                         Colors.transparent,
                       ],
                       stops: [0.0, 0.4, 1.0],

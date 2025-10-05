@@ -81,7 +81,7 @@ class CustomButton extends StatelessWidget {
         );
       case CustomButtonVariant.glassWhite:
         return ElevatedButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.2),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

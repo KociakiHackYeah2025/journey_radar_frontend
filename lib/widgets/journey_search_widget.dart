@@ -116,7 +116,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                                   controller: widget.fromController,
                                   decoration: InputDecoration(
                                     hintStyle: TextStyle(
-                                      color: Colors.grey.withOpacity(0.8),
+                                      color: Colors.grey.withValues(alpha: 0.8),
                                       fontSize: 18,
                                     ),
                                     border: InputBorder.none,
@@ -139,7 +139,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
+                                      color: Colors.white.withValues(alpha: 0.5),
                         borderRadius: const BorderRadius.only(
                           topRight: Radius.circular(16),
                           bottomRight: Radius.circular(16),
@@ -176,7 +176,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                                   controller: widget.toController,
                                   decoration: InputDecoration(
                                     hintStyle: TextStyle(
-                                      color: Colors.grey.withOpacity(0.8),
+                                      color: Colors.grey.withValues(alpha: 0.8),
                                       fontSize: 18,
                                     ),
                                     border: InputBorder.none,
@@ -264,7 +264,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                             decoration: InputDecoration(
                               hintText: 'Wybierz datę',
                               hintStyle: TextStyle(
-                                color: Colors.grey.withOpacity(0.8),
+                                color: Colors.grey.withValues(alpha: 0.8),
                                 fontSize: 12,
                               ),
                               border: InputBorder.none,
@@ -289,7 +289,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                 flex: 3,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(16),
                       bottomRight: Radius.circular(16),
@@ -311,7 +311,7 @@ class _JourneySearchWidgetState extends State<JourneySearchWidget> {
                             decoration: InputDecoration(
                               hintText: 'Wybierz godzinę',
                               hintStyle: TextStyle(
-                                color: Colors.grey.withOpacity(0.8),
+                                color: Colors.grey.withValues(alpha: 0.8),
                                 fontSize: 12,
                               ),
                               border: InputBorder.none,

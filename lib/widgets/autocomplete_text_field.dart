@@ -184,9 +184,9 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
             InputDecoration(
               hintText: widget.hintText,
               hintStyle: TextStyle(
-                color: Colors.grey.withOpacity(0.8),
-                fontSize: 18,
-              ),
+                      color: Colors.grey.withValues(alpha: 0.8),
+                      fontSize: 18,
+                    ),
               border: InputBorder.none,
               contentPadding: widget.contentPadding ?? const EdgeInsets.all(8),
               isDense: true,

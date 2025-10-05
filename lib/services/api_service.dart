@@ -222,15 +222,82 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
+        List<String> suggestions = [];
+        
         if (data is List) {
-          return data.cast<String>();
-        } else if (data is Map && data['results'] != null) {
-          return (data['results'] as List).cast<String>();
-        } else if (data is Map && data['data'] != null) {
-          return (data['data'] as List).cast<String>();
+          // Przekształć każdy element na string, niezależnie od typu
+          for (var item in data) {
+            if (item is String) {
+              suggestions.add(item);
+            } else if (item is Map<String, dynamic>) {
+              // Jeśli to obiekt, spróbuj wyciągnąć nazwę stacji
+              if (item['stop_name'] != null) {
+                suggestions.add(item['stop_name'].toString());
+              } else if (item['name'] != null) {
+                suggestions.add(item['name'].toString());
+              } else if (item['station'] != null) {
+                suggestions.add(item['station'].toString());
+              } else if (item['title'] != null) {
+                suggestions.add(item['title'].toString());
+              } else {
+                // Fallback - użyj pierwszej wartości string w obiekcie
+                for (var value in item.values) {
+                  if (value is String && value.isNotEmpty) {
+                    suggestions.add(value);
+                    break;
+                  }
+                }
+              }
+            } else {
+              // Przekształć na string
+              suggestions.add(item.toString());
+            }
+          }
+        } else if (data is Map) {
+          // Spróbuj różnych kluczy
+          List<dynamic>? items;
+          if (data['results'] != null) {
+            items = data['results'] as List?;
+          } else if (data['data'] != null) {
+            items = data['data'] as List?;
+          } else if (data['suggestions'] != null) {
+            items = data['suggestions'] as List?;
+          } else if (data['items'] != null) {
+            items = data['items'] as List?;
+          }
+          
+          if (items != null) {
+            for (var item in items) {
+              if (item is String) {
+                suggestions.add(item);
+              } else if (item is Map<String, dynamic>) {
+                // Jeśli to obiekt, spróbuj wyciągnąć nazwę stacji
+                if (item['stop_name'] != null) {
+                  suggestions.add(item['stop_name'].toString());
+                } else if (item['name'] != null) {
+                  suggestions.add(item['name'].toString());
+                } else if (item['station'] != null) {
+                  suggestions.add(item['station'].toString());
+                } else if (item['title'] != null) {
+                  suggestions.add(item['title'].toString());
+                } else {
+                  // Fallback - użyj pierwszej wartości string w obiekcie
+                  for (var value in item.values) {
+                    if (value is String && value.isNotEmpty) {
+                      suggestions.add(value);
+                      break;
+                    }
+                  }
+                }
+              } else {
+                // Przekształć na string
+                suggestions.add(item.toString());
+              }
+            }
+          }
         }
         
-        return [];
+        return suggestions;
       } else {
         debugPrint('Search autocomplete error: ${response.statusCode}');
         return [];
