@@ -13,7 +13,6 @@ import 'widgets/journey_search_widget.dart';
 import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
-import 'screens/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1080,46 +1079,80 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.home,
-                              color: Colors.white,
+                          // Przyciski zależne od stanu logowania
+                          if (!isLoggedIn) ...[
+                            // Przed zalogowaniem - tylko przycisk "Zaloguj"
+                            ListTile(
+                              leading: const Icon(
+                                Icons.login,
+                                color: Colors.white,
+                              ),
+                              title: const Text(
+                                'Zaloguj',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              onTap: () async {
+                                setState(() {
+                                  isSidebarOpen = false;
+                                });
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _checkLoginStatus();
+                                }
+                              },
                             ),
-                            title: const Text(
-                              'Strona główna',
-                              style: TextStyle(color: Colors.white),
+                          ] else ...[
+                            // Po zalogowaniu - przyciski "Profil" i "Zgłoś utrudnienia"
+                            ListTile(
+                              leading: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                              title: const Text(
+                                'Profil',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  isSidebarOpen = false;
+                                });
+                                // TODO: Navigacja do profilu
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Funkcja profilu w przygotowaniu'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+                              },
                             ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomePage(),
-                                ),
-                              );
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.settings,
-                              color: Colors.white,
+                            ListTile(
+                              leading: const Icon(
+                                Icons.report_problem,
+                                color: Colors.white,
+                              ),
+                              title: const Text(
+                                'Zgłoś utrudnienia',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  isSidebarOpen = false;
+                                });
+                                // TODO: Navigacja do zgłaszania utrudnień
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Funkcja zgłaszania utrudnień w przygotowaniu'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              },
                             ),
-                            title: const Text(
-                              'Ustawienia',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            onTap: () {},
-                          ),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.info,
-                              color: Colors.white,
-                            ),
-                            title: const Text(
-                              'O aplikacji',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            onTap: () {},
-                          ),
+                          ],
                           const Spacer(),
                           if (isLoggedIn)
                             ListTile(
