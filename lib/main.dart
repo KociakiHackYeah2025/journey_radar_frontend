@@ -13,6 +13,7 @@ import 'widgets/journey_search_widget.dart';
 import 'services/api_service.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
+import 'screens/profile_page.dart';
 import 'screens/train_search_screen.dart';
 
 void main() async {
@@ -701,6 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           children: [
                                                             Text(
                                                               result['from'],
+                                                              maxLines: 2,
                                                               style: const TextStyle(
                                                                 color: Color(
                                                                   0xFF232323,
@@ -757,6 +759,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           children: [
                                                             Text(
                                                               result['to'],
+                                                              maxLines: 2,
                                                               style: const TextStyle(
                                                                 color: Color(
                                                                   0xFF232323,
@@ -1118,17 +1121,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'Profil',
                                 style: TextStyle(color: Colors.white),
                               ),
-                              onTap: () {
+                              onTap: () async {
                                 setState(() {
                                   isSidebarOpen = false;
                                 });
-                                // TODO: Navigacja do profilu
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Funkcja profilu w przygotowaniu'),
-                                    backgroundColor: Colors.blue,
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfilePage(),
                                   ),
                                 );
+                                // Jeśli wylogowanie się powiodło, odśwież stan
+                                if (result == true) {
+                                  _checkLoginStatus();
+                                }
                               },
                             ),
                             ListTile(

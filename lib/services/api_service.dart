@@ -202,7 +202,7 @@ class ApiService {
   }
 
   // Funkcja do wyszukiwania autouzupełniania stacji
-  static Future<List<String>> searchAutocomplete(String query) async {
+static Future<List<String>> searchAutocomplete(String query) async {
     if (query.isEmpty || query.length < 2) {
       return [];
     }
@@ -373,6 +373,112 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Journey search exception: $e');
+      return {
+        'error': 'Błąd połączenia',
+        'message': 'Sprawdź połączenie z internetem: $e'
+      };
+    }
+  }
+
+  // Funkcja do pobierania informacji o użytkowniku
+  static Future<Map<String, dynamic>?> getUserInfo() async {
+    try {
+      final authHeader = await getAuthHeader();
+      if (authHeader == null) {
+        return {
+          'error': 'Brak autoryzacji',
+          'message': 'Musisz być zalogowany'
+        };
+      }
+
+      debugPrint('Getting user info...');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authHeader,
+        },
+      );
+
+      debugPrint('User info response status: ${response.statusCode}');
+      debugPrint('User info response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'error': 'Błąd pobierania danych',
+            'message': errorData['message'] ?? 'Nie udało się pobrać informacji o użytkowniku'
+          };
+        } catch (e) {
+          return {
+            'error': 'Błąd pobierania danych',
+            'message': 'Kod błędu: ${response.statusCode}'
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('User info exception: $e');
+      return {
+        'error': 'Błąd połączenia',
+        'message': 'Sprawdź połączenie z internetem: $e'
+      };
+    }
+  }
+
+  // Funkcja do usuwania konta użytkownika
+  static Future<Map<String, dynamic>?> deleteAccount() async {
+    try {
+      final authHeader = await getAuthHeader();
+      if (authHeader == null) {
+        return {
+          'error': 'Brak autoryzacji',
+          'message': 'Musisz być zalogowany'
+        };
+      }
+
+      debugPrint('Deleting user account...');
+      
+      final response = await http.delete(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authHeader,
+        },
+      );
+
+      debugPrint('Delete account response status: ${response.statusCode}');
+      debugPrint('Delete account response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Wyczyść token po usunięciu konta
+        await logout();
+        return {
+          'success': true,
+          'message': 'Konto zostało usunięte'
+        };
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'error': 'Błąd usuwania konta',
+            'message': errorData['message'] ?? 'Nie udało się usunąć konta'
+          };
+        } catch (e) {
+          return {
+            'error': 'Błąd usuwania konta',
+            'message': 'Kod błędu: ${response.statusCode}'
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('Delete account exception: $e');
       return {
         'error': 'Błąd połączenia',
         'message': 'Sprawdź połączenie z internetem: $e'
