@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'widgets/app_background.dart';
 import 'widgets/glass_card.dart';
@@ -56,6 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isCheckingLoginStatus = true;
   bool isApiConnected = false;
   String apiConnectionMessage = 'Sprawdzanie połączenia...';
+  
+  // Zmienne dla wyników wyszukiwania
+  List<Map<String, dynamic>> searchResults = [];
+  bool isSearching = false;
+  bool hasSearched = false;
 
   @override
   void initState() {
@@ -156,14 +163,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (!isApiConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Brak połączenia z API. Sprawdź połączenie internetowe.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // NAWET bez API - pokaż mockowe wyniki
+      setState(() {
+        isSearching = true;
+      });
+      
+      // Symuluj krótkie ładowanie
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (mounted) {
+        setState(() {
+          hasSearched = true;
+          isSearching = false;
+          searchResults = _generateMockResults();
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Brak połączenia z API - wyświetlam przykładowe połączenia'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
       return;
     }
+
+    setState(() {
+      isSearching = true;
+    });
 
     try {
       // Sprawdź czy data i godzina zostały wybrane
@@ -191,67 +218,279 @@ class _HomeScreenState extends State<HomeScreen> {
         datetime: datetime,
       );
 
-      if (result?['error'] != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result?['message'] ?? 'Błąd wyszukiwania'),
-              backgroundColor: Colors.red,
-            ),
-          );
+      // Sprawdź czy faktycznie znaleziono połączenia
+      bool hasResults = false;
+      int resultCount = 0;
+      String messageType = 'demo';
+      
+      if (result != null && result['error'] == null) {
+        // Sprawdź różne możliwe struktury odpowiedzi API
+        if (result['results'] is List && (result['results'] as List).isNotEmpty) {
+          hasResults = true;
+          resultCount = (result['results'] as List).length;
+          messageType = 'success';
+        } else if (result['data'] is List && (result['data'] as List).isNotEmpty) {
+          hasResults = true;
+          resultCount = (result['data'] as List).length;
+          messageType = 'success';
+        } else if (result['journeys'] is List && (result['journeys'] as List).isNotEmpty) {
+          hasResults = true;
+          resultCount = (result['journeys'] as List).length;
+          messageType = 'success';
+        } else if (result is List && (result as List).isNotEmpty) {
+          hasResults = true;
+          resultCount = (result as List).length;
+          messageType = 'success';
         }
-      } else {
-        // Sprawdź czy faktycznie znaleziono połączenia
-        bool hasResults = false;
-        int resultCount = 0;
-        
-        if (result != null) {
-          // Sprawdź różne możliwe struktury odpowiedzi
-          if (result['results'] is List && (result['results'] as List).isNotEmpty) {
-            hasResults = true;
-            resultCount = (result['results'] as List).length;
-          } else if (result['data'] is List && (result['data'] as List).isNotEmpty) {
-            hasResults = true;
-            resultCount = (result['data'] as List).length;
-          } else if (result['journeys'] is List && (result['journeys'] as List).isNotEmpty) {
-            hasResults = true;
-            resultCount = (result['journeys'] as List).length;
-          } else if (result is List && (result as List).isNotEmpty) {
-            hasResults = true;
-            resultCount = (result as List).length;
-          }
-        }
-        
-        if (mounted) {
+      } else if (result?['error'] != null) {
+        messageType = 'error';
+      }
+      
+      // ZAWSZE pokaż wyniki - nawet przy błędzie API
+      if (mounted) {
+        setState(() {
+          hasSearched = true;
+          isSearching = false;
           if (hasResults) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Znaleziono $resultCount połączeń z ${_fromController.text} do ${_toController.text}'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            // Tutaj można dodać nawigację do strony z wynikami
-            debugPrint('Journey search results: $result');
+            // Jeśli mamy prawdziwe wyniki API
+            searchResults = _extractSearchResults(result);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Nie znaleziono połączeń z ${_fromController.text} do ${_toController.text}'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-            debugPrint('No journey results found: $result');
+            // Używamy mockowych danych dla demo/błędu
+            searchResults = _generateMockResults();
           }
+        });
+        
+        // Pokaż odpowiedni komunikat
+        String message;
+        Color backgroundColor;
+        
+        switch (messageType) {
+          case 'success':
+            message = 'Znaleziono $resultCount połączeń z ${_fromController.text} do ${_toController.text}';
+            backgroundColor = Colors.green;
+            break;
+          case 'error':
+            message = 'Błąd API - wyświetlam przykładowe połączenia';
+            backgroundColor = Colors.orange;
+            break;
+          default:
+            message = 'Wyświetlam przykładowe połączenia (demo)';
+            backgroundColor = Colors.blue;
         }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: backgroundColor,
+          ),
+        );
+        debugPrint('Journey search results: $result');
       }
     } catch (e) {
       if (mounted) {
+        // NAWET przy wyjątku - pokaż mockowe wyniki
+        setState(() {
+          hasSearched = true;
+          isSearching = false;
+          searchResults = _generateMockResults();
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Błąd podczas wyszukiwania: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Błąd połączenia - wyświetlam przykładowe połączenia'),
+            backgroundColor: Colors.orange,
           ),
         );
+        debugPrint('Journey search error: $e');
       }
+    }
+  }
+
+  List<Map<String, dynamic>> _extractSearchResults(dynamic apiResult) {
+    // Tutaj można będzie przetwarzać prawdziwe dane z API
+    List<Map<String, dynamic>> results = [];
+    
+    // Różne możliwe struktury odpowiedzi API
+    List<dynamic>? rawResults;
+    if (apiResult['results'] is List) {
+      rawResults = apiResult['results'];
+    } else if (apiResult['data'] is List) {
+      rawResults = apiResult['data'];
+    } else if (apiResult['journeys'] is List) {
+      rawResults = apiResult['journeys'];
+    } else if (apiResult is List) {
+      rawResults = apiResult;
+    }
+    
+    if (rawResults != null) {
+      for (var item in rawResults) {
+        results.add({
+          'from': item['from'] ?? 'Stacja A',
+          'to': item['to'] ?? 'Stacja B',
+          'departureTime': item['departureTime'] ?? '10:30',
+          'arrivalTime': item['arrivalTime'] ?? '11:45',
+          'duration': item['duration'] ?? '1h 15min',
+          'changes': item['changes'] ?? 0,
+          'platform': item['platform'] ?? '3',
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  List<Map<String, dynamic>> _generateMockResults() {
+    // Mockowe dane połączeń - każde z inną trasą
+    return [
+      {
+        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
+        'departureTime': '16:04',
+        'arrivalTime': '17:46',
+        'duration': '1h 42min',
+        'changes': 0,
+        'platform': '3',
+        'delay': 0,
+        'trainType': 'IC',
+        'routePoints': [
+          {'lat': 50.0647, 'lng': 19.9450, 'name': 'Kraków Główny'},
+          {'lat': 50.0135, 'lng': 20.9890, 'name': 'Tarnów'},
+        ],
+      },
+      {
+        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
+        'departureTime': '17:40',
+        'arrivalTime': '19:29',
+        'duration': '1h 49min',
+        'changes': 0,
+        'platform': '1',
+        'delay': 0,
+        'trainType': 'RE',
+        'routePoints': [
+          {'lat': 50.0647, 'lng': 19.9450, 'name': 'Kraków Główny'},
+          {'lat': 50.0800, 'lng': 20.2100, 'name': 'Bochnią'}, // Punkt pośredni
+          {'lat': 50.0400, 'lng': 20.6500, 'name': 'Brzesko'}, // Punkt pośredni
+          {'lat': 50.0135, 'lng': 20.9890, 'name': 'Tarnów'},
+        ],
+      },
+      {
+        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
+        'departureTime': '18:15',
+        'arrivalTime': '20:12',
+        'duration': '1h 57min',
+        'changes': 0,
+        'platform': '2',
+        'delay': 5,
+        'trainType': 'TLK',
+        'routePoints': [
+          {'lat': 50.0647, 'lng': 19.9450, 'name': 'Kraków Główny'},
+          {'lat': 50.1200, 'lng': 20.1000, 'name': 'Wieliczka'}, // Inna trasa
+          {'lat': 50.0900, 'lng': 20.4500, 'name': 'Niepołomice'}, // Punkt pośredni
+          {'lat': 50.0600, 'lng': 20.7800, 'name': 'Dębica'}, // Punkt pośredni
+          {'lat': 50.0135, 'lng': 20.9890, 'name': 'Tarnów'},
+        ],
+      },
+    ];
+  }
+
+  Widget _buildConnectionMap(Map<String, dynamic> connection) {
+    final routePoints = connection['routePoints'] as List<Map<String, dynamic>>? ?? [];
+    
+    if (routePoints.isEmpty) {
+      return Container(
+        color: Colors.grey[400],
+        child: const Center(
+          child: Text(
+            'Mapa niedostępna',
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    
+    // Przygotuj punkty dla mapy
+    final List<LatLng> mapPoints = routePoints.map((point) => 
+      LatLng(point['lat'] as double, point['lng'] as double)
+    ).toList();
+    
+    // Wyznacz centrum mapy
+    double centerLat = mapPoints.map((p) => p.latitude).reduce((a, b) => a + b) / mapPoints.length;
+    double centerLng = mapPoints.map((p) => p.longitude).reduce((a, b) => a + b) / mapPoints.length;
+    
+    return FlutterMap(
+      options: MapOptions(
+        initialCenter: LatLng(centerLat, centerLng),
+        initialZoom: 8.5,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+        ),
+      ),
+      children: [
+        // Warstwa kafelków
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.journey_radar',
+        ),
+        
+        // Linia trasy - kolor zależny od typu pociągu
+        if (mapPoints.length > 1)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: mapPoints,
+                strokeWidth: 3.0,
+                color: _getTrainColor(connection['trainType'] ?? 'IC'),
+              ),
+            ],
+          ),
+        
+        // Markery stacji - mniejsze dla mini-mapy
+        MarkerLayer(
+          markers: routePoints.asMap().entries.map((entry) {
+            final index = entry.key;
+            final point = entry.value;
+            final isFirst = index == 0;
+            final isLast = index == routePoints.length - 1;
+            
+            return Marker(
+              point: LatLng(point['lat'] as double, point['lng'] as double),
+              width: 24,
+              height: 24,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isFirst ? Colors.green : (isLast ? Colors.red : Colors.blue),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Center(
+                  child: Icon(
+                    isFirst ? Icons.play_arrow : (isLast ? Icons.stop : Icons.circle),
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Color _getTrainColor(String trainType) {
+    switch (trainType.toUpperCase()) {
+      case 'IC':
+        return const Color(0xFFFDC300); // Żółty dla InterCity
+      case 'RE':
+        return Colors.blue; // Niebieski dla Regional Express
+      case 'IR':
+        return Colors.green; // Zielony dla InterRegio
+      case 'TLK':
+        return Colors.purple; // Fioletowy dla TLK
+      default:
+        return const Color(0xFFFDC300); // Domyślny żółty
     }
   }
 
@@ -360,6 +599,195 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
+
+                          const SizedBox(height: 40),
+
+                          // 🚂 Sekcja wyników wyszukiwania
+                          if (isSearching)
+                            const Center(
+                              child: Column(
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Szukam połączeń...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          if (hasSearched && !isSearching && searchResults.isNotEmpty) 
+                            // Lista wyników połączeń w scrollable view
+                            SizedBox(
+                              height: 500, // Zwiększona wysokość dla scrollable listy
+                              child: ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                itemCount: searchResults.length,
+                                itemBuilder: (context, index) {
+                                  final result = searchResults[index];
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(vertical: 8),
+                                    child: GlassCard(
+                                      width: double.infinity,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          children: [
+                                            // Górna sekcja z czasami i trasą
+                                            Row(
+                                              children: [
+                                                // Lewa strona - czas odjazdu i stacja
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        result['from'],
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        result['departureTime'],
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // Środek - ikona strzałki i czas podróży
+                                          Column(
+                                            children: [
+                                              Icon(
+                                                Icons.arrow_forward,
+                                                color: Colors.white.withOpacity(0.8),
+                                                size: 24,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                result['duration'],
+                                                style: TextStyle(
+                                                  color: Colors.white.withOpacity(0.8),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                          // Prawa strona - czas przyjazdu i stacja
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  result['to'],
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  result['arrivalTime'],
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 12),
+
+                                      // Dolna sekcja z szczegółami
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.train,
+                                                color: Colors.white.withOpacity(0.8),
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                result['trainType'] ?? 'Pociąg',
+                                                style: TextStyle(
+                                                  color: Colors.white.withOpacity(0.8),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (result['changes'] == 0)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: const Text(
+                                                'Bezpośredni',
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          Text(
+                                            'Peron ${result['platform']}',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(0.8),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 16),
+
+                                      // Mini-mapa dla tego połączenia
+                                      Container(
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: _buildConnectionMap(result),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                                },
+                              ),
+                            ),
 
                           const SizedBox(height: 40),
                         ],
