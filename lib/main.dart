@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isCheckingLoginStatus = true;
   bool isApiConnected = false;
   String apiConnectionMessage = 'Sprawdzanie połączenia...';
-  
+
   // Zmienne dla wyników wyszukiwania
   List<Map<String, dynamic>> searchResults = [];
   bool isSearching = false;
@@ -145,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_fromController.text.isEmpty || _toController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Proszę wypełnić zarówno miejsce wyjazdu jak i miejsce przeznaczenia'),
+          content: Text(
+            'Proszę wypełnić zarówno miejsce wyjazdu jak i miejsce przeznaczenia',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -167,20 +169,22 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         isSearching = true;
       });
-      
+
       // Symuluj krótkie ładowanie
       await Future.delayed(const Duration(seconds: 1));
-      
+
       if (mounted) {
         setState(() {
           hasSearched = true;
           isSearching = false;
           searchResults = _generateMockResults();
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Brak połączenia z API - wyświetlam przykładowe połączenia'),
+            content: Text(
+              'Brak połączenia z API - wyświetlam przykładowe połączenia',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -209,9 +213,10 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         // Użyj aktualnej daty i godziny jako domyślnej
         final now = DateTime.now();
-        datetime = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}T${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+        datetime =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}T${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
       }
-      
+
       final result = await ApiService.searchJourneys(
         from: _fromController.text,
         to: _toController.text,
@@ -222,18 +227,21 @@ class _HomeScreenState extends State<HomeScreen> {
       bool hasResults = false;
       int resultCount = 0;
       String messageType = 'demo';
-      
+
       if (result != null && result['error'] == null) {
         // Sprawdź różne możliwe struktury odpowiedzi API
-        if (result['results'] is List && (result['results'] as List).isNotEmpty) {
+        if (result['results'] is List &&
+            (result['results'] as List).isNotEmpty) {
           hasResults = true;
           resultCount = (result['results'] as List).length;
           messageType = 'success';
-        } else if (result['data'] is List && (result['data'] as List).isNotEmpty) {
+        } else if (result['data'] is List &&
+            (result['data'] as List).isNotEmpty) {
           hasResults = true;
           resultCount = (result['data'] as List).length;
           messageType = 'success';
-        } else if (result['journeys'] is List && (result['journeys'] as List).isNotEmpty) {
+        } else if (result['journeys'] is List &&
+            (result['journeys'] as List).isNotEmpty) {
           hasResults = true;
           resultCount = (result['journeys'] as List).length;
           messageType = 'success';
@@ -245,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } else if (result?['error'] != null) {
         messageType = 'error';
       }
-      
+
       // ZAWSZE pokaż wyniki - nawet przy błędzie API
       if (mounted) {
         setState(() {
@@ -259,14 +267,15 @@ class _HomeScreenState extends State<HomeScreen> {
             searchResults = _generateMockResults();
           }
         });
-        
+
         // Pokaż odpowiedni komunikat
         String message;
         Color backgroundColor;
-        
+
         switch (messageType) {
           case 'success':
-            message = 'Znaleziono $resultCount połączeń z ${_fromController.text} do ${_toController.text}';
+            message =
+                'Znaleziono $resultCount połączeń z ${_fromController.text} do ${_toController.text}';
             backgroundColor = Colors.green;
             break;
           case 'error':
@@ -277,12 +286,9 @@ class _HomeScreenState extends State<HomeScreen> {
             message = 'Wyświetlam przykładowe połączenia (demo)';
             backgroundColor = Colors.blue;
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: backgroundColor,
-          ),
+          SnackBar(content: Text(message), backgroundColor: backgroundColor),
         );
         debugPrint('Journey search results: $result');
       }
@@ -294,10 +300,12 @@ class _HomeScreenState extends State<HomeScreen> {
           isSearching = false;
           searchResults = _generateMockResults();
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Błąd połączenia - wyświetlam przykładowe połączenia'),
+            content: Text(
+              'Błąd połączenia - wyświetlam przykładowe połączenia',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -309,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _extractSearchResults(dynamic apiResult) {
     // Tutaj można będzie przetwarzać prawdziwe dane z API
     List<Map<String, dynamic>> results = [];
-    
+
     // Różne możliwe struktury odpowiedzi API
     List<dynamic>? rawResults;
     if (apiResult['results'] is List) {
@@ -321,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (apiResult is List) {
       rawResults = apiResult;
     }
-    
+
     if (rawResults != null) {
       for (var item in rawResults) {
         results.add({
@@ -335,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-    
+
     return results;
   }
 
@@ -343,7 +351,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Mockowe dane połączeń - każde z inną trasą
     return [
       {
-        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'from': _fromController.text.isNotEmpty
+            ? _fromController.text
+            : 'KRAKÓW GŁÓWNY',
         'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
         'departureTime': '16:04',
         'arrivalTime': '17:46',
@@ -358,7 +368,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       },
       {
-        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'from': _fromController.text.isNotEmpty
+            ? _fromController.text
+            : 'KRAKÓW GŁÓWNY',
         'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
         'departureTime': '17:40',
         'arrivalTime': '19:29',
@@ -375,7 +387,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       },
       {
-        'from': _fromController.text.isNotEmpty ? _fromController.text : 'KRAKÓW GŁÓWNY',
+        'from': _fromController.text.isNotEmpty
+            ? _fromController.text
+            : 'KRAKÓW GŁÓWNY',
         'to': _toController.text.isNotEmpty ? _toController.text : 'TARNÓW',
         'departureTime': '18:15',
         'arrivalTime': '20:12',
@@ -387,7 +401,11 @@ class _HomeScreenState extends State<HomeScreen> {
         'routePoints': [
           {'lat': 50.0647, 'lng': 19.9450, 'name': 'Kraków Główny'},
           {'lat': 50.1200, 'lng': 20.1000, 'name': 'Wieliczka'}, // Inna trasa
-          {'lat': 50.0900, 'lng': 20.4500, 'name': 'Niepołomice'}, // Punkt pośredni
+          {
+            'lat': 50.0900,
+            'lng': 20.4500,
+            'name': 'Niepołomice',
+          }, // Punkt pośredni
           {'lat': 50.0600, 'lng': 20.7800, 'name': 'Dębica'}, // Punkt pośredni
           {'lat': 50.0135, 'lng': 20.9890, 'name': 'Tarnów'},
         ],
@@ -396,8 +414,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildConnectionMap(Map<String, dynamic> connection) {
-    final routePoints = connection['routePoints'] as List<Map<String, dynamic>>? ?? [];
-    
+    final routePoints =
+        connection['routePoints'] as List<Map<String, dynamic>>? ?? [];
+
     if (routePoints.isEmpty) {
       return Container(
         color: Colors.grey[400],
@@ -409,16 +428,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-    
+
     // Przygotuj punkty dla mapy
-    final List<LatLng> mapPoints = routePoints.map((point) => 
-      LatLng(point['lat'] as double, point['lng'] as double)
-    ).toList();
-    
+    final List<LatLng> mapPoints = routePoints
+        .map((point) => LatLng(point['lat'] as double, point['lng'] as double))
+        .toList();
+
     // Wyznacz centrum mapy
-    double centerLat = mapPoints.map((p) => p.latitude).reduce((a, b) => a + b) / mapPoints.length;
-    double centerLng = mapPoints.map((p) => p.longitude).reduce((a, b) => a + b) / mapPoints.length;
-    
+    double centerLat =
+        mapPoints.map((p) => p.latitude).reduce((a, b) => a + b) /
+        mapPoints.length;
+    double centerLng =
+        mapPoints.map((p) => p.longitude).reduce((a, b) => a + b) /
+        mapPoints.length;
+
     return FlutterMap(
       options: MapOptions(
         initialCenter: LatLng(centerLat, centerLng),
@@ -433,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.example.journey_radar',
         ),
-        
+
         // Linia trasy - kolor zależny od typu pociągu
         if (mapPoints.length > 1)
           PolylineLayer(
@@ -445,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        
+
         // Markery stacji - mniejsze dla mini-mapy
         MarkerLayer(
           markers: routePoints.asMap().entries.map((entry) {
@@ -453,20 +476,24 @@ class _HomeScreenState extends State<HomeScreen> {
             final point = entry.value;
             final isFirst = index == 0;
             final isLast = index == routePoints.length - 1;
-            
+
             return Marker(
               point: LatLng(point['lat'] as double, point['lng'] as double),
               width: 24,
               height: 24,
               child: Container(
                 decoration: BoxDecoration(
-                  color: isFirst ? Colors.green : (isLast ? Colors.red : Colors.blue),
+                  color: isFirst
+                      ? Colors.green
+                      : (isLast ? Colors.red : Colors.blue),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: Center(
                   child: Icon(
-                    isFirst ? Icons.play_arrow : (isLast ? Icons.stop : Icons.circle),
+                    isFirst
+                        ? Icons.play_arrow
+                        : (isLast ? Icons.stop : Icons.circle),
                     color: Colors.white,
                     size: 12,
                   ),
@@ -545,7 +572,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   // Pastylka z nazwą przewoźnika i statusem API
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -554,7 +582,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
                                         child: const Text(
                                           'KOLEJE MAŁOPOLSKIE',
@@ -569,7 +599,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         width: 12,
                                         height: 12,
                                         decoration: BoxDecoration(
-                                          color: isApiConnected ? Colors.green : Colors.red,
+                                          color: isApiConnected
+                                              ? Colors.green
+                                              : Colors.red,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -620,176 +652,296 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
 
-                          if (hasSearched && !isSearching && searchResults.isNotEmpty) 
-                            // Lista wyników połączeń w scrollable view
-                            SizedBox(
-                              height: 500, // Zwiększona wysokość dla scrollable listy
-                              child: ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
-                                itemCount: searchResults.length,
-                                itemBuilder: (context, index) {
-                                  final result = searchResults[index];
-                                  return Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 8),
+                          if (hasSearched &&
+                              !isSearching &&
+                              searchResults.isNotEmpty)
+                            Column(
+                              children: [
+                                for (final result in searchResults)
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    width: double.infinity,
                                     child: GlassCard(
                                       width: double.infinity,
                                       child: Padding(
                                         padding: const EdgeInsets.all(16),
                                         child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            // Górna sekcja z czasami i trasą
-                                            Row(
+                                            // 🟡 GÓRA – od/do (bez labeli) + okrągły „swap” na środku
+                                            Stack(
+                                              alignment: Alignment.center,
                                               children: [
-                                                // Lewa strona - czas odjazdu i stacja
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        result['from'],
-                                                        style: const TextStyle(
+                                                Row(
+                                                  children: [
+                                                    // lewa połowa – start
+                                                    Expanded(
+                                                      child: Container(
+                                                        decoration: const BoxDecoration(
                                                           color: Colors.white,
-                                                          fontSize: 14,
-                                                          fontWeight: FontWeight.w500,
+                                                          borderRadius:
+                                                              BorderRadius.only(
+                                                                topLeft:
+                                                                    Radius.circular(
+                                                                      16,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              16,
+                                                            ),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              result['from'],
+                                                              style: const TextStyle(
+                                                                color: Color(
+                                                                  0xFF232323,
+                                                                ),
+                                                                fontSize: 18,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 4,
+                                                            ),
+                                                            Text(
+                                                              result['departureTime'],
+                                                              style:
+                                                                  const TextStyle(
+                                                                    color: Colors
+                                                                        .black54,
+                                                                    fontSize:
+                                                                        14,
+                                                                  ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
-                                                      Text(
-                                                        result['departureTime'],
-                                                  style: const TextStyle(
+                                                    ),
+
+                                                    // prawa połowa – cel
+                                                    Expanded(
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white
+                                                              .withOpacity(0.5),
+                                                          borderRadius:
+                                                              const BorderRadius.only(
+                                                                topRight:
+                                                                    Radius.circular(
+                                                                      16,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets.fromLTRB(
+                                                              32,
+                                                              16,
+                                                              16,
+                                                              16,
+                                                            ),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              result['to'],
+                                                              style: const TextStyle(
+                                                                color: Color(
+                                                                  0xFF232323,
+                                                                ),
+                                                                fontSize: 18,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 4,
+                                                            ),
+                                                            Text(
+                                                              result['arrivalTime'],
+                                                              style:
+                                                                  const TextStyle(
+                                                                    color: Colors
+                                                                        .black54,
+                                                                    fontSize:
+                                                                        14,
+                                                                  ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+
+                                                // środkowy okrąg (dekor)
+                                                Container(
+                                                  width: 38,
+                                                  height: 38,
+                                                  decoration: BoxDecoration(
                                                     color: Colors.white,
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFFFDC300,
+                                                      ),
+                                                      width: 2,
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.1),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(
+                                                          0,
+                                                          2,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.arrow_forward_rounded,
+                                                    size: 20,
+                                                    color: Color(0xFFFDC300),
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                          ),
 
-                                          // Środek - ikona strzałki i czas podróży
-                                          Column(
-                                            children: [
-                                              Icon(
-                                                Icons.arrow_forward,
-                                                color: Colors.white.withOpacity(0.8),
-                                                size: 24,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                result['duration'],
-                                                style: TextStyle(
-                                                  color: Colors.white.withOpacity(0.8),
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-
-                                          // Prawa strona - czas przyjazdu i stacja
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  result['to'],
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  result['arrivalTime'],
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 12),
-
-                                      // Dolna sekcja z szczegółami
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.train,
-                                                color: Colors.white.withOpacity(0.8),
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                result['trainType'] ?? 'Pociąg',
-                                                style: TextStyle(
-                                                  color: Colors.white.withOpacity(0.8),
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          if (result['changes'] == 0)
+                                            // 📊 szczegóły — kontynuacja headera
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.green.withOpacity(0.2),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: const Text(
-                                                'Bezpośredni',
-                                                style: TextStyle(
-                                                  color: Colors.green,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w500,
+                                              width: double.infinity,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 16,
+                                                  ),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Color(0xFFFDC300),
+                                                    width: 2,
+                                                  ),
                                                 ),
                                               ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.train,
+                                                        color: Color(
+                                                          0xFF232323,
+                                                        ),
+                                                        size: 18,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        result['trainType'] ??
+                                                            'Pociąg',
+                                                        style: const TextStyle(
+                                                          color: Color(
+                                                            0xFF232323,
+                                                          ),
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (result['changes'] == 0)
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 10,
+                                                            vertical: 5,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green
+                                                            .withOpacity(0.1),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                      ),
+                                                      child: const Text(
+                                                        'Bezpośredni',
+                                                        style: TextStyle(
+                                                          color: Colors.green,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  Text(
+                                                    'Peron ${result['platform']}',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF232323),
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          Text(
-                                            'Peron ${result['platform']}',
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(0.8),
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
 
-                                      const SizedBox(height: 16),
-
-                                      // Mini-mapa dla tego połączenia
-                                      Container(
-                                        height: 120,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(12),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.2),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
+                                            // 🗺️ mini-mapa – przylepiona pod szczegółami
+                                            Container(
+                                              width: double.infinity,
+                                              height: 180,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Color(0xFFFDC300),
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                borderRadius: BorderRadius.only(
+                                                  bottomLeft: Radius.circular(
+                                                    16,
+                                                  ),
+                                                  bottomRight: Radius.circular(
+                                                    16,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    const BorderRadius.only(
+                                                      bottomLeft:
+                                                          Radius.circular(16),
+                                                      bottomRight:
+                                                          Radius.circular(16),
+                                                    ),
+                                                child: _buildConnectionMap(
+                                                  result,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: _buildConnectionMap(result),
-                                        ),
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
-                                },
-                              ),
+                              ],
                             ),
-
-                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
@@ -910,7 +1062,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
                   child: Container(
                     width: 250,
-                    color: const Color(0xFFFDC300).withOpacity(0.25), // półprzezroczysty kolor
+                    color: const Color(
+                      0xFFFDC300,
+                    ).withOpacity(0.25), // półprzezroczysty kolor
                     child: SafeArea(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -927,7 +1081,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           ListTile(
-                            leading: const Icon(Icons.home, color: Colors.white),
+                            leading: const Icon(
+                              Icons.home,
+                              color: Colors.white,
+                            ),
                             title: const Text(
                               'Strona główna',
                               style: TextStyle(color: Colors.white),
@@ -942,7 +1099,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                           ),
                           ListTile(
-                            leading: const Icon(Icons.settings, color: Colors.white),
+                            leading: const Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                            ),
                             title: const Text(
                               'Ustawienia',
                               style: TextStyle(color: Colors.white),
@@ -950,7 +1110,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: () {},
                           ),
                           ListTile(
-                            leading: const Icon(Icons.info, color: Colors.white),
+                            leading: const Icon(
+                              Icons.info,
+                              color: Colors.white,
+                            ),
                             title: const Text(
                               'O aplikacji',
                               style: TextStyle(color: Colors.white),
@@ -960,7 +1123,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Spacer(),
                           if (isLoggedIn)
                             ListTile(
-                              leading: const Icon(Icons.logout, color: Colors.white),
+                              leading: const Icon(
+                                Icons.logout,
+                                color: Colors.white,
+                              ),
                               title: const Text(
                                 'Wyloguj',
                                 style: TextStyle(color: Colors.white),
