@@ -8,6 +8,7 @@ class AutocompleteTextField extends StatefulWidget {
   final TextStyle? textStyle;
   final InputDecoration? decoration;
   final EdgeInsets? contentPadding;
+  final Function(String stopId, String stopName)? onStationSelected;
 
   const AutocompleteTextField({
     super.key,
@@ -16,6 +17,7 @@ class AutocompleteTextField extends StatefulWidget {
     this.textStyle,
     this.decoration,
     this.contentPadding,
+    this.onStationSelected,
   });
 
   @override

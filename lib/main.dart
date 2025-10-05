@@ -700,6 +700,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           children: [
                                                             Text(
                                                               result['from'],
+                                                              maxLines: 2,
                                                               style: const TextStyle(
                                                                 color: Color(
                                                                   0xFF232323,
@@ -756,6 +757,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           children: [
                                                             Text(
                                                               result['to'],
+                                                              maxLines: 2,
                                                               style: const TextStyle(
                                                                 color: Color(
                                                                   0xFF232323,

@@ -202,7 +202,7 @@ class ApiService {
   }
 
   // Funkcja do wyszukiwania autouzupełniania stacji
-  static Future<List<String>> searchAutocomplete(String query) async {
+static Future<List<String>> searchAutocomplete(String query) async {
     if (query.isEmpty || query.length < 2) {
       return [];
     }
